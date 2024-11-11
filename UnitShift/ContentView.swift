@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// Enum pour les unités de longueur
 enum LengthUnit: String {
     case meters = "meters"
     case kilometers = "kilometers"
@@ -15,35 +14,23 @@ enum LengthUnit: String {
     case yards = "yards"
     case miles = "miles"
     
-    // Fonction pour convertir vers des mètres
-    func toMeters(value: Double) -> Double {
+    func toMeters(value: Decimal) -> Decimal {
         switch self {
-        case .meters:
-            return value
-        case .kilometers:
-            return value * 1000
-        case .feet:
-            return value * 0.3048
-        case .yards:
-            return value * 0.9144
-        case .miles:
-            return value * 1609.34
+        case .meters: return value
+        case .kilometers: return value * 1000
+        case .feet: return value * 0.3048
+        case .yards: return value * 0.9144
+        case .miles: return value * 1609.34
         }
     }
 
-    // Fonction pour convertir à partir des mètres
-    func fromMeters(value: Double) -> Double {
+    func fromMeters(value: Decimal) -> Decimal {
         switch self {
-        case .meters:
-            return value
-        case .kilometers:
-            return value / 1000
-        case .feet:
-            return value / 0.3048
-        case .yards:
-            return value / 0.9144
-        case .miles:
-            return value / 1609.34
+        case .meters: return value
+        case .kilometers: return value / 1000
+        case .feet: return value / 0.3048
+        case .yards: return value / 0.9144
+        case .miles: return value / 1609.34
         }
     }
 }
@@ -52,10 +39,10 @@ struct ContentView: View {
     @State private var inputUnit: LengthUnit = .meters
     @State private var outputUnit: LengthUnit = .feet
     @State private var inputValue: String = ""
+    @FocusState private var inputValueIsFocused: Bool  // Pour gérer le focus du clavier
 
-    // Calcul du résultat
-    var convertedValue: Double {
-        let input = Double(inputValue) ?? 0
+    var convertedValue: Decimal {
+        let input = Decimal(string: inputValue) ?? 0
         let valueInMeters = inputUnit.toMeters(value: input)
         return outputUnit.fromMeters(value: valueInMeters)
     }
@@ -63,9 +50,8 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             Form {
-                // Choix de l'unité d'entrée
-                Section(header: Text("Unité d'entrée")) {
-                    Picker("Unité d'entrée", selection: $inputUnit) {
+                Section(header: Text("Input Unit")) {
+                    Picker("Input Unit", selection: $inputUnit) {
                         Text("meters").tag(LengthUnit.meters)
                         Text("kilometers").tag(LengthUnit.kilometers)
                         Text("feet").tag(LengthUnit.feet)
@@ -75,9 +61,8 @@ struct ContentView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
 
-                // Choix de l'unité de sortie
-                Section(header: Text("Unité de sortie")) {
-                    Picker("Unité de sortie", selection: $outputUnit) {
+                Section(header: Text("Output Unit")) {
+                    Picker("Output Unit", selection: $outputUnit) {
                         Text("meters").tag(LengthUnit.meters)
                         Text("kilometers").tag(LengthUnit.kilometers)
                         Text("feet").tag(LengthUnit.feet)
@@ -87,19 +72,29 @@ struct ContentView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
 
-                // Saisie de la valeur
-                Section(header: Text("Valeur à convertir")) {
-                    TextField("Valeur", text: $inputValue)
+                Section(header: Text("Value to Convert")) {
+                    TextField("Value", text: $inputValue)
                         .keyboardType(.decimalPad)
+                        .focused($inputValueIsFocused) // Lier le focus du champ
                 }
 
-                // Résultat de la conversion
-                Section(header: Text("Résultat")) {
-                    Text("\(convertedValue, specifier: "%.2f") \(outputUnit.rawValue)")
+                Section(header: Text("Result")) {
+                    Text("\(NSDecimalNumber(decimal: convertedValue).doubleValue, specifier: "%.2f") \(outputUnit.rawValue)")
                 }
             }
             .navigationTitle("UnitShift")
+            .toolbar {
+                // Afficher le bouton Done uniquement lorsque le clavier est affiché
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if inputValueIsFocused {
+                        Button("Done") {
+                            inputValueIsFocused = false // Ferme le clavier
+                        }
+                    }
+                }
+            }
         }
+        .navigationViewStyle(StackNavigationViewStyle()) // Forcer la vue en mode plein écran sur iPad
     }
 }
 
